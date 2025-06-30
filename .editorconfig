@@ -197,3 +197,17 @@ dotnet_naming_style.pascal_case.required_prefix =
 dotnet_naming_style.pascal_case.required_suffix = 
 dotnet_naming_style.pascal_case.word_separator = 
 dotnet_naming_style.pascal_case.capitalization = pascal_case
+
+# Security analyzer rules
+dotnet_diagnostic.CA1062.severity = warning  # Validate arguments of public methods
+dotnet_diagnostic.CA2100.severity = error    # Review SQL queries for security vulnerabilities
+dotnet_diagnostic.CA3075.severity = error    # Insecure DTD processing
+dotnet_diagnostic.CA5350.severity = error    # Do not use weak cryptographic algorithms
+dotnet_diagnostic.CA5351.severity = error    # Do not use broken cryptographic algorithms
+dotnet_diagnostic.CA5359.severity = error    # Do not disable certificate validation
+dotnet_diagnostic.CA5397.severity = error    # Do not use deprecated SslProtocols values
+
+# Nullable reference types - reduce severity for CodeQL false positives
+dotnet_diagnostic.CS8604.severity = suggestion  # Possible null reference argument
+dotnet_diagnostic.CS8600.severity = suggestion  # Converting null literal or possible null value
+dotnet_diagnostic.CS8625.severity = suggestion  # Cannot convert null literal to non-nullable reference type

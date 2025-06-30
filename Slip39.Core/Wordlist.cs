@@ -142,6 +142,10 @@ namespace Slip39.Core
             // Fallback to file system
             var assemblyLocation = assembly.Location;
             var assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
+            if (assemblyDirectory == null)
+            {
+                throw new InvalidOperationException("Unable to determine assembly directory for wordlist.");
+            }
             var wordlistPath = Path.Combine(assemblyDirectory, "wordlist.txt");
             
             if (File.Exists(wordlistPath))
@@ -157,7 +161,7 @@ namespace Slip39.Core
             var wordsList = new List<string>();
             using (var reader = new StreamReader(stream))
             {
-                string line;
+                string? line;
                 
                 while ((line = reader.ReadLine()) != null)
                 {

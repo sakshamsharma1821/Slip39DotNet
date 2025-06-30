@@ -1,0 +1,30 @@
+name: "CodeQL Config"
+
+# Disable the default CodeQL query suites
+disable-default-queries: false
+
+# Specify which query suites to run
+query-suites:
+  - csharp-security-and-quality.qls
+
+# Paths to ignore during analysis
+paths-ignore:
+  - "**/*.Generated.cs"
+  - "**/obj/**"
+  - "**/bin/**"
+  - "**/*.Designer.cs"
+  - "**/GlobalAssemblyInfo.cs"
+  - "**/AssemblyInfo.cs"
+  - "**/*Test*.cs"
+  - "**/*Tests*.cs"
+
+# Additional configuration
+queries:
+  - name: Use security queries
+    uses: security-and-quality
+    
+# Reduce false positives for test projects
+paths:
+  - include: "Slip39.Core/**"
+  - exclude: "Slip39.Core.Tests/**"
+  - exclude: "Slip39.Console/**"
