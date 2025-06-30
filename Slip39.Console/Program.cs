@@ -407,7 +407,7 @@ class Program
                     if (masterSecret.Length == 64)
                     {
                         // Reconstruct the original BIP32 extended private key
-                        string reconstructedXpriv = ReconstructBip32ExtendedKey(masterSecret);
+                        string reconstructedXpriv = Bip32MasterKey.ReconstructFromComponents(masterSecret);
                         SystemConsole.WriteLine($"Reconstructed BIP32 Extended Private Key: {reconstructedXpriv}");
                     }
                     else
@@ -1121,56 +1121,5 @@ class Program
                 SystemConsole.WriteLine();
             }
         }
-    }
-    
-    /// <summary>
-    /// Reconstructs a BIP32 extended private key from a 64-byte master secret
-    /// (32-byte private key + 32-byte chain code)
-    /// </summary>
-    static string ReconstructBip32ExtendedKey(byte[] masterSecret)
-    {
-        if (masterSecret.Length != 64)
-        {
-            throw new ArgumentException($"Master secret must be 64 bytes for BIP32 reconstruction, got {masterSecret.Length} bytes");
-        }
-        
-        // Extract the private key and chain code
-        var privateKey = new byte[32];
-        var chainCode = new byte[32];
-        Array.Copy(masterSecret, 0, privateKey, 0, 32);
-        Array.Copy(masterSecret, 32, chainCode, 0, 32);
-        
-        // Build BIP32 extended private key structure (78 bytes total)
-        var extendedKey = new byte[78];
-        int offset = 0;
-        
-        // Version (4 bytes): 0x0488ADE4 for mainnet private key
-        var mainnetPrivateVersion = new byte[] { 0x04, 0x88, 0xAD, 0xE4 };
-        Array.Copy(mainnetPrivateVersion, 0, extendedKey, offset, 4);
-        offset += 4;
-        
-        // Depth (1 byte): 0x00 for master key
-        extendedKey[offset] = 0x00;
-        offset += 1;
-        
-        // Parent fingerprint (4 bytes): 0x00000000 for master key
-        Array.Clear(extendedKey, offset, 4);
-        offset += 4;
-        
-        // Child number (4 bytes): 0x00000000 for master key
-        Array.Clear(extendedKey, offset, 4);
-        offset += 4;
-        
-        // Chain code (32 bytes)
-        Array.Copy(chainCode, 0, extendedKey, offset, 32);
-        offset += 32;
-        
-        // Private key (33 bytes): 0x00 prefix + 32-byte private key
-        extendedKey[offset] = 0x00; // Private key prefix
-        offset += 1;
-        Array.Copy(privateKey, 0, extendedKey, offset, 32);
-        
-        // Encode with Base58Check
-        return Base58Check.Encode(extendedKey);
     }
 }

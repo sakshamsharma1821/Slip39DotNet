@@ -313,4 +313,83 @@ public class Bip32MasterKeyTests
         Assert.Equal(chainCode, recoveredChainCode);
         Assert.Equal(masterSecret, recoveredSecret);
     }
+    
+    [Fact]
+    public void ReconstructFromComponents_ValidInput_ReturnsCorrectXpriv()
+    {
+        // Arrange - Test data: known private key and chain code that should produce a specific xprv
+        var privateKey = Convert.FromHexString("e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35");
+        var chainCode = Convert.FromHexString("873dff81c02f525623fd1fe5167eac3a55a049de3d314bb42ee227ffed37d508");
+        
+        // Combine into 64-byte secret
+        var combinedSecret = new byte[64];
+        Array.Copy(privateKey, 0, combinedSecret, 0, 32);
+        Array.Copy(chainCode, 0, combinedSecret, 32, 32);
+        
+        // Act
+        string reconstructedXpriv = Bip32MasterKey.ReconstructFromComponents(combinedSecret);
+        
+        // Assert
+        Assert.StartsWith("xprv", reconstructedXpriv);
+        Assert.Equal(111, reconstructedXpriv.Length); // Standard BIP32 xprv length
+        
+        // Verify we can decode it back and get the same components
+        byte[] decodedData = Base58Check.Decode(reconstructedXpriv);
+        Assert.Equal(78, decodedData.Length);
+        
+        // Extract and verify private key
+        var extractedPrivateKey = new byte[32];
+        Array.Copy(decodedData, 46, extractedPrivateKey, 0, 32);
+        Assert.Equal(privateKey, extractedPrivateKey);
+        
+        // Extract and verify chain code
+        var extractedChainCode = new byte[32];
+        Array.Copy(decodedData, 13, extractedChainCode, 0, 32);
+        Assert.Equal(chainCode, extractedChainCode);
+    }
+    
+    [Fact]
+    public void ReconstructFromComponents_InvalidLength_ThrowsException()
+    {
+        // Arrange - Test with wrong length input
+        var invalidSecret = new byte[32]; // Should be 64 bytes
+        
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() => Bip32MasterKey.ReconstructFromComponents(invalidSecret));
+        Assert.Contains("must be 64 bytes", ex.Message);
+    }
+    
+    [Fact]
+    public void ReconstructFromComponents_NullInput_ThrowsException()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => Bip32MasterKey.ReconstructFromComponents(null!));
+    }
+    
+    [Fact]
+    public void ReconstructFromComponents_RoundTrip_WithExistingXpriv()
+    {
+        // Arrange - Use the same test xpriv from the previous test
+        var originalXpriv = "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi";
+        
+        // Decode the xpriv to get the private key and chain code
+        byte[] extendedKeyData = Base58Check.Decode(originalXpriv);
+        
+        // Extract private key (32 bytes starting at offset 46) and chain code (32 bytes starting at offset 13)
+        var privateKey = new byte[32];
+        var chainCode = new byte[32];
+        Array.Copy(extendedKeyData, 46, privateKey, 0, 32);
+        Array.Copy(extendedKeyData, 13, chainCode, 0, 32);
+        
+        // Combine into 64-byte secret
+        var combinedSecret = new byte[64];
+        Array.Copy(privateKey, 0, combinedSecret, 0, 32);
+        Array.Copy(chainCode, 0, combinedSecret, 32, 32);
+        
+        // Act - Reconstruct the BIP32 xpriv using the new method
+        string reconstructedXpriv = Bip32MasterKey.ReconstructFromComponents(combinedSecret);
+        
+        // Assert - Verify we get back the exact same xpriv
+        Assert.Equal(originalXpriv, reconstructedXpriv);
+    }
 }
